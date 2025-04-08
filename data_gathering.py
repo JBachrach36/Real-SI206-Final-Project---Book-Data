@@ -14,7 +14,7 @@ import my_keys
 
 # API Keys
 google_books_key = my_keys.GOOGLE_BOOKS_KEY
-# No Open Library API Key needed
+# No Open Library API Key needed!
 
 # GLOBAL CONSTANTS
 GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes"
