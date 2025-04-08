@@ -18,12 +18,6 @@ ALL_COMMON_GENRES = [
 
 
 
-# SET UP DATABASE
-def set_up_database(db_name):
-    pass
-
-
-
 # ANALYZE TOPIC TRENDS
 def analyze_topic_trends(cur, conn, target_genres):
     pass

@@ -50,7 +50,38 @@ def set_up_database(db_name):
 
 # CREATE TABLES
 def create_tables(cur, conn):
-    pass
+    """
+    Use SQL to create the 'Books' and 'Topic_Trends' tables
+
+    Args:
+        cur: the cursor object
+        conn: the connection object
+    """
+    #Create Books table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Books (
+            book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT UNIQUE NOT NULL,
+            author TEXT,
+            publication_date TEXT NOT NULL,
+            source_api TEXT NOT NULL,
+            subject_categories TEXT
+        )
+    ''')
+
+    # Create Topic_Trends table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Topic_Trends (
+            trend_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            year INTEGER NOT NULL,
+            topic TEXT NOT NULL,
+            frequency INTEGER NOT NULL,
+            book_id INTEGER,
+            FOREIGN KEY (book_id) REFERENCES Books(book_id)
+        )
+    ''')
+    conn.commit()
+    
 
 
 

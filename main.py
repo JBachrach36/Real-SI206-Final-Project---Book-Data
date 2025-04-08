@@ -1,8 +1,8 @@
 # main.py
 import sqlite3
 import os
-import data_gathering
-import data_analysis
+import data_gathering as dg
+import data_analysis as da
 
 # GLOBAL CONSTANTS (kept consistent across the other files)
 DATABASE_NAME = "book_trends.db"
@@ -31,7 +31,15 @@ def main():
 
 
     # Close connection
-    pass
+    
+
+
+
+    # TEST CODE (Temporary):
+    # testing set_up_database and create_tables
+    cur, conn = dg.set_up_database(DATABASE_NAME)
+    dg.create_tables(cur, conn)
+    conn.close()
 
 
 if __name__ == "__main__":
