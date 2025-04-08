@@ -19,23 +19,7 @@ google_books_key = my_keys.GOOGLE_BOOKS_KEY
 
 # CREATE DATABASE
 def set_up_database(db_name):
-    """
-    Sets up a connection to an SQLite database
-    Constructs the full path to the database file
-    Creates the database file if it doesn't exist
-    Creates a cursor object for executing SQL commands
-
-    Args:
-        db_name (str): The name of the database file
-
-    Returns:
-        tuple: A tuple containing the cursor and connection objects
-    """
-
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(os.path.join(path, db_name))
-    cur = conn.cursor()
-    return cur, conn
+    pass
 
 # CREATE TABLES
 def create_tables(cur, conn):
