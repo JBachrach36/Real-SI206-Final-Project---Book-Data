@@ -17,6 +17,10 @@ google_books_key = my_keys.GOOGLE_BOOKS_KEY
 
 # CREATE DATABASE
 def set_up_database(db_name):
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(os.path.join(path, db_name))
+    cur = conn.cursor()
+    return cur, conn
     pass
 
 # CREATE TABLES
