@@ -28,11 +28,13 @@ def main():
     # Present genre choices to the user
     target_genres = u.present_genre_choices()
 
+    # TODO Prompt user to select API
+
     # Set up database connection (used by both gathering and analysis)
     cur, conn = u.set_up_database()
 
-    # Clear data and reset IDs
-    u.full_reset_database(cur, conn)
+    # Prompt user to clear data and reset IDs
+    u.prompt_full_reset_database(cur, conn)
 
     # Create tables (moved here to ensure they exist before gathering)
     dg.create_tables(cur, conn)

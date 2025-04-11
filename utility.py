@@ -57,55 +57,51 @@ def full_reset_database(cur, conn):
         else:
             # If it's a different OperationalError, still show the error
             raise e
+        
+def prompt_full_reset_database(cur, conn):
+    while True:
+        try:
+            user_input = input("Do you want to fully clear the database first? (y/n): ").strip().lower()
+            if user_input == 'y':
+                full_reset_database(cur, conn)
+                break
+            elif user_input == 'n':
+                print("Skipping database reset.")
+                break
+            else:
+                print("Invalid input. Please enter 'y' or 'n'.")
+        except Exception as e:
+            print(f"Error: {e}. Please try again.")
+
+    
+
 
 
 # PRESENT GENRE CHOICES
 def present_genre_choices():
-    print("Choose up to 10 genres to analyze:")
+    print("Choose one genre to analyze:")
     for i, genre in enumerate(ALL_COMMON_GENRES):
         print(f"{i + 1}. {genre}")
-    print("Choose up to 10 genres to analyze:")
 
-    # Ensure the user selected 10 or less genres
-    selected_indices = input("Enter the numbers of the genres you want to analyze (e.g., 1 2 3): ")
-    try:
-        # Split the string input into individual elements
-        indices_str = selected_indices.split()
+    while True:
+        try:
+            genre_number = int(input("Enter the corresponding number of the genre you want to analyze (e.g., any single number from 1 to 16): "))
+            if 1 <= genre_number <= len(ALL_COMMON_GENRES):
+                return [ALL_COMMON_GENRES[genre_number - 1]]
+            else:
+                print(f"Invalid choice. Please enter a number between 1 and {len(ALL_COMMON_GENRES)}.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
 
-        # Convert string indices to integers
-        selected_indices = []
-        for index_str in indices_str:
-            index = int(index_str) - 1
-            selected_indices.append(index)
 
-        # Validate indices
-        valid_indices = True
-        for index in selected_indices:
-            if index < 0 or index >= len(ALL_COMMON_GENRES):
-                valid_indices = False
-                break
 
-        # Check if number of selections is valid
-        if not valid_indices or len(selected_indices) > 10:
-            raise ValueError
-
-        # Create target_genres list from selected indices
-        target_genres = []
-        for index in selected_indices:
-            target_genres.append(ALL_COMMON_GENRES[index])
-
-    except ValueError:
-        print("Invalid input. Analyzing first 10 genres.")
-        target_genres = ALL_COMMON_GENRES[:10]
-
-    return target_genres
 
 
 # INSERT TARGET GENRES
-def insert_target_genres(cur, conn, target_genres):
+def insert_target_genre(cur, conn, target_genre):
     # Populate genre_dict with the genre name and its corresponding ID
     genre_dict = {}
-    for genre in target_genres:
+    for genre in target_genre:
         cur.execute('INSERT OR IGNORE INTO GenreLookup (genre) VALUES (?)', (genre,))
         conn.commit()
         cur.execute('SELECT genre_id FROM GenreLookup WHERE genre = ?', (genre,))
@@ -118,13 +114,13 @@ def insert_target_genres(cur, conn, target_genres):
     # dg.gather_google_books_data(
     #     cur, conn, google_query,
     #     dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
-    #     target_genres,
+    #     target_genre,
     #     genre_dict
     # )
     dg.gather_open_library_data(
         cur, conn,
         dg.OPEN_LIBRARY_RECORDS_TO_GATHER,
-        target_genres,
+        target_genre,
         genre_dict
     )
 

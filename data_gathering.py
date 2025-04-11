@@ -22,8 +22,8 @@ google_books_key = my_keys.GOOGLE_BOOKS_KEY
 GOOGLE_BOOKS_BASE_URL = "https://www.googleapis.com/books/v1/volumes"
 OPEN_LIBRARY_BASE_URL = "https://openlibrary.org/search.json"
 DATABASE_NAME = "book_trends.db"
-GOOGLE_BOOKS_RECORDS_TO_GATHER = 100
-OPEN_LIBRARY_RECORDS_TO_GATHER = 100
+GOOGLE_BOOKS_RECORDS_TO_GATHER = 25
+OPEN_LIBRARY_RECORDS_TO_GATHER = 25
 API_CALL_LIMIT = 25
 USER_AGENT = 'BookTrendAnalyzer (jbachrach36@gmail.com)'
 
