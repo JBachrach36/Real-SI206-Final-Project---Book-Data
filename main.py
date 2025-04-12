@@ -25,8 +25,12 @@ def main():
     Then calls analysis and visualization functions.
     """
 
-    # Present genre choices to the user
-    target_genres = u.present_genre_choices()
+    # Present genre choices to the user (gets a list with one genre)
+    target_genres_list = u.present_genre_choices()
+    if not target_genres_list:
+        print("No genre selected. Exiting.")
+        return
+    target_genre = target_genres_list[0]
 
     # TODO Prompt user to select API
 
@@ -36,20 +40,52 @@ def main():
     # Prompt user to clear data and reset IDs
     u.prompt_full_reset_database(cur, conn)
 
-    # Create tables (moved here to ensure they exist before gathering)
+    # Create tables
     dg.create_tables(cur, conn)
 
-    # Insert all target genres into GenreLookup first
-    # Not used in main, but essential in other functions to populate the database
-    genre_dict = u.insert_target_genres(cur, conn, target_genres)
+    # Ensure the target genre exists in GenreLookup and get its ID. the function inserts the genre if it doesn't exist
+    # The returned dict will contain {'GenreName': genre_id}
+    genre_dict = u.ensure_genre_and_get_id(cur, conn, target_genre)
+
+
+    if not genre_dict:
+        print(f"Could not process genre: {target_genre}. Exiting.")
+        conn.close()
+        return
+    
+    # Gather data from Open Library for the chosen genre (25 books)
+    print(f"Attempting to gather {dg.OPEN_LIBRARY_RECORDS_TO_GATHER} new records for '{target_genre}' from Open Library")
+    dg.gather_open_library_data(
+        cur, conn,
+        dg.OPEN_LIBRARY_RECORDS_TO_GATHER,
+        target_genre,
+        genre_dict
+    )
+
+    # Gather data from Google Books (stubbed)
+    # TODO implement this the same was the open library data was gathered
+    #print(f"Attempting to gather {dg.GOOGLE_BOOKS_RECORDS_TO_GATHER} new records for '{target_genre}' from Google Books")
+    # TODO Uncomment these when I make the gather google books data function
+    # google_query = "books" # Example query
+    # dg.gather_google_books_data(
+    #     cur, conn, google_query,
+    #     dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
+    #     target_genre,
+    #     genre_dict
+    # )
+
+
 
     # Commit after gathering all data
+    print("Committing gathered data")
     conn.commit()
 
     # Analyze and visualize data
     # TODO Call necessary functions for data analysis
+    #print("Analysing and visualiing data")
     
     # Close connection
+    print("Closing database connection.")
     conn.close()
 
 

@@ -32,10 +32,8 @@ USER_AGENT = 'BookTrendAnalyzer (jbachrach36@gmail.com)'
 def set_up_database(db_name):
     """
     Sets up a connection to an SQLite database.
-
     Args:
         db_name (str): The name of the database file.
-
     Returns:
         tuple: A tuple containing the cursor and connection objects.
     """
@@ -49,30 +47,28 @@ def set_up_database(db_name):
 def create_tables(cur, conn):
     """
     Creates the 'Books' and 'GenreLookup' tables in the database.
-
     Args:
         cur: the cursor object
         conn: the connection object
     """
     # Create GenreLookup table for storing genre names and their IDs
     cur.execute('''
-        CREATE TABLE IF NOT EXISTS GenreLookup (
-            genre_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            genre TEXT UNIQUE NOT NULL
-        )
+    CREATE TABLE IF NOT EXISTS GenreLookup (
+        genre_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        genre TEXT UNIQUE NOT NULL
+    )
     ''')
-
     # Create Books table for storing book metadata
     cur.execute('''
-        CREATE TABLE IF NOT EXISTS Books (
-            book_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT UNIQUE NOT NULL,
-            author TEXT,
-            publish_date INTEGER NOT NULL,
-            source_api TEXT NOT NULL,
-            genre_id INTEGER,
-            FOREIGN KEY (genre_id) REFERENCES GenreLookup(genre_id)
-        )
+    CREATE TABLE IF NOT EXISTS Books (
+        book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT UNIQUE NOT NULL,
+        author TEXT,
+        publish_date INTEGER NOT NULL,
+        source_api TEXT NOT NULL,
+        genre_id INTEGER,
+        FOREIGN KEY (genre_id) REFERENCES GenreLookup(genre_id)
+    )
     ''')
     conn.commit()
 

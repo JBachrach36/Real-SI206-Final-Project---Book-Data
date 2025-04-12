@@ -1,3 +1,4 @@
+# utility.py
 import re
 import os
 import csv
@@ -22,6 +23,9 @@ VISUALIZATION_OUTPUT_DIR = "visualizations"
 
 # SET UP DATABASE
 def set_up_database():
+    """
+    Creates/connects to the database of DATABASE_NAME
+    """
     cur, conn = dg.set_up_database(DATABASE_NAME)
     return cur, conn
 
@@ -36,29 +40,48 @@ def full_reset_database(cur, conn):
         # Temporarily disable foreign key checks
         cur.execute("PRAGMA foreign_keys = OFF;")
 
-        # Delete all rows from child Books (if it exists)
-        cur.execute("DELETE FROM Books;")
-        # Delete all rows from GenreLookup (if it exists)
-        cur.execute("DELETE FROM GenreLookup;")
 
-        # Reset the auto increment counters in sqlite_sequence (if it exists)
-        cur.execute("DELETE FROM sqlite_sequence WHERE name='Books';")
-        cur.execute("DELETE FROM sqlite_sequence WHERE name='GenreLookup';")
+        # Check if tables exist before attempting to delete
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Books';")
+        if cur.fetchone():
+             # Delete all rows from Books
+            cur.execute("DELETE FROM Books;")
+            # Reset the auto increment counter for Books
+            cur.execute("DELETE FROM sqlite_sequence WHERE name='Books';")
+
+
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='GenreLookup';")
+        if cur.fetchone():
+            # Delete all rows from GenreLookup
+            cur.execute("DELETE FROM GenreLookup;")
+            # Reset the auto increment counter for GenreLookup
+            cur.execute("DELETE FROM sqlite_sequence WHERE name='GenreLookup';")
+
 
         # Turn foreign key checks back on
         cur.execute("PRAGMA foreign_keys = ON;")
-
         conn.commit()
         print("Tables cleared and ID counters reset.")
+
+
     # Don't clear if there is nothing to clear. Operation error is a problem with the sql database operation
-    except sqlite3.OperationalError as e:
-        if "no such table" in str(e):
-            print("Tables do not exist yet. Skipping reset.")
-        else:
-            # If it's a different OperationalError, still show the error
-            raise e
+    # For general sqlite3 errors
+    except sqlite3.Error as e: 
+        print(f"An error occurred during database reset: {e}")
+        # Attempt to roll back changes if something went wrong mid-way
+        conn.rollback()
+        # Optionally re-enable foreign keys if they were turned off
+        try:
+            cur.execute("PRAGMA foreign_keys = ON;")
+        # No error if connection is closed
+        except:
+             pass
+        
+
         
 def prompt_full_reset_database(cur, conn):
+    """ Prompts the user if they want to clear the database before proceeding.
+    """
     while True:
         try:
             user_input = input("Do you want to fully clear the database first? (y/n): ").strip().lower()
@@ -79,6 +102,8 @@ def prompt_full_reset_database(cur, conn):
 
 # PRESENT GENRE CHOICES
 def present_genre_choices():
+    """ Presents the list of genres and prompts the user to select one.
+    """
     print("Choose one genre to analyze:")
     for i, genre in enumerate(ALL_COMMON_GENRES):
         print(f"{i + 1}. {genre}")
@@ -97,31 +122,41 @@ def present_genre_choices():
 
 
 
-# INSERT TARGET GENRES
-def insert_target_genre(cur, conn, target_genre):
-    # Populate genre_dict with the genre name and its corresponding ID
+# ENSURE GENRE EXISTS AND GET ID (Big changes here)
+def ensure_genre_and_get_id(cur, conn, target_genre):
+    """
+    Ensures the target genre exists in GenreLookup.
+    Adds it if it doesn't exist (auto-incrementing ID).
+    Returns a dictionary that maps the genre name to its genre_id.
+    """
     genre_dict = {}
-    for genre in target_genre:
-        cur.execute('INSERT OR IGNORE INTO GenreLookup (genre) VALUES (?)', (genre,))
+    try:
+        # Insert the genre if it doesn't exist. If it exists, this does nothing.
+        cur.execute('INSERT OR IGNORE INTO GenreLookup (genre) VALUES (?)', (target_genre,))
         conn.commit()
-        cur.execute('SELECT genre_id FROM GenreLookup WHERE genre = ?', (genre,))
-        genre_id = cur.fetchone()[0]
-        genre_dict[genre] = genre_id
 
-    # Gather data from both APIs
-    # TODO Uncomment these when I make the gather google books data function 
-    # google_query = "books"
-    # dg.gather_google_books_data(
-    #     cur, conn, google_query,
-    #     dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
-    #     target_genre,
-    #     genre_dict
-    # )
-    dg.gather_open_library_data(
-        cur, conn,
-        dg.OPEN_LIBRARY_RECORDS_TO_GATHER,
-        target_genre,
-        genre_dict
-    )
+
+        # Retrieve the genre_id (no matter if it was just inserted or already existed)
+        cur.execute('SELECT genre_id FROM GenreLookup WHERE genre = ?', (target_genre,))
+        result = cur.fetchone()
+
+
+        if result:
+            genre_id = result[0]
+            genre_dict[target_genre] = genre_id
+            print(f"Genre '{target_genre}' is in database with ID: {genre_id}.")
+        else:
+            print(f"Error: Could not retrieve genre_id for {target_genre} after insertion attempt.")
+            conn.rollback()
+
+
+    except sqlite3.Error as e:
+        print(f"Database error while ensuring genre '{target_genre}': {e}")
+        conn.rollback()
+        return {}
 
     return genre_dict
+
+
+
+
