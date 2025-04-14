@@ -6,6 +6,8 @@ import data_analysis as da
 import utility as u
 
 
+
+
 # GLOBAL CONSTANTS (kept consistent across the other files)
 DATABASE_NAME = "book_trends.db"
 ALL_COMMON_GENRES = [
@@ -17,6 +19,8 @@ ALL_COMMON_GENRES = [
 VISUALIZATION_OUTPUT_DIR = "visualizations"
 
 
+
+
 # MAIN
 def main():
     """
@@ -25,6 +29,7 @@ def main():
     Then calls analysis and visualization functions.
     """
 
+
     # Present genre choices to the user (gets a list with one genre)
     target_genres_list = u.present_genre_choices()
     if not target_genres_list:
@@ -32,47 +37,59 @@ def main():
         return
     target_genre = target_genres_list[0]
 
-    # TODO Prompt user to select API
+
+    # Prompt user to select API
+    api_choice = u.present_api_choices()
+
 
     # Set up database connection (used by both gathering and analysis)
     cur, conn = u.set_up_database()
 
+
     # Prompt user to clear data and reset IDs
     u.prompt_full_reset_database(cur, conn)
+
 
     # Create tables
     dg.create_tables(cur, conn)
 
-    # Ensure the target genre exists in GenreLookup and get its ID. the function inserts the genre if it doesn't exist
-    # The returned dict will contain {'GenreName': genre_id}
-    genre_dict = u.ensure_genre_and_get_id(cur, conn, target_genre)
+
+    # Ensure genre exists and get its id. Modified to make the ids increment properly
+    genre_id = u.get_or_add_genre(cur, conn, target_genre)
+    genre_dict = {target_genre: genre_id}
+    print(f"Genre '{target_genre}' is in database with ID: {genre_id}.")
+
+
+
+
 
 
     if not genre_dict:
         print(f"Could not process genre: {target_genre}. Exiting.")
         conn.close()
         return
-    
-    # Gather data from Open Library for the chosen genre (25 books)
-    print(f"Attempting to gather {dg.OPEN_LIBRARY_RECORDS_TO_GATHER} new records for '{target_genre}' from Open Library")
-    dg.gather_open_library_data(
-        cur, conn,
-        dg.OPEN_LIBRARY_RECORDS_TO_GATHER,
-        target_genre,
-        genre_dict
-    )
+   
+    if api_choice == 1:
+        print(f"Attempting to gather {dg.OPEN_LIBRARY_RECORDS_TO_GATHER} new records for '{target_genre}' from Open Library")
+        dg.gather_open_library_data(
+            cur, conn,
+            dg.OPEN_LIBRARY_RECORDS_TO_GATHER,
+            target_genre,
+            genre_dict
+        )
+    elif api_choice == 2:
+        print(f"Attempting to gather {dg.GOOGLE_BOOKS_RECORDS_TO_GATHER} new records for '{target_genre}' from Google Books")
+        # Possibly modify next line
+        google_query = "books"
+        dg.gather_google_books_data(
+            cur, conn, google_query,
+            dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
+            target_genre,
+            genre_dict
+        )
 
-    # Gather data from Google Books (stubbed)
-    # TODO implement this the same was the open library data was gathered
-    #print(f"Attempting to gather {dg.GOOGLE_BOOKS_RECORDS_TO_GATHER} new records for '{target_genre}' from Google Books")
-    # TODO Uncomment these when I make the gather google books data function
-    # google_query = "books" # Example query
-    # dg.gather_google_books_data(
-    #     cur, conn, google_query,
-    #     dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
-    #     target_genre,
-    #     genre_dict
-    # )
+
+
 
 
 
@@ -80,14 +97,20 @@ def main():
     print("Committing gathered data")
     conn.commit()
 
+
     # Analyze and visualize data
     # TODO Call necessary functions for data analysis
     #print("Analysing and visualiing data")
-    
+   
     # Close connection
     print("Closing database connection.")
     conn.close()
 
 
+
+
 if __name__ == "__main__":
     main()
+
+
+
