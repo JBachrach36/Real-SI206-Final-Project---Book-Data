@@ -20,6 +20,22 @@ ALL_COMMON_GENRES = [
 ]
 VISUALIZATION_OUTPUT_DIR = "visualizations"
 
+# PRESENT API CHOICES
+def present_api_choices():
+    """Prompts the user to choose an API source for book data."""
+    print("Choose which API to gather book data from:")
+    print("1. Open Library")
+    print("2. Google Books")
+    while True:
+        try:
+            api_number = int(input("Enter 1 or 2: "))
+            if api_number in [1, 2]:
+                return api_number
+            else:
+                print("Invalid choice. Please enter 1 or 2.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+
 
 # SET UP DATABASE
 def set_up_database():
@@ -28,6 +44,21 @@ def set_up_database():
     """
     cur, conn = dg.set_up_database(DATABASE_NAME)
     return cur, conn
+
+# GET OR ADD GENRE
+def get_or_add_genre(cur, conn, genre_name):
+    """
+    Get the genre_id for 'genre_name', adding it if not present. Ensures no ID gaps.
+    Returns the genre_id as int.
+    """
+    cur.execute("SELECT genre_id FROM GenreLookup WHERE genre = ?", (genre_name,))
+    response = cur.fetchone()
+    if response:
+        return response[0]
+    cur.execute("INSERT INTO GenreLookup (genre) VALUES (?)", (genre_name,))
+    conn.commit()
+    return cur.lastrowid
+
 
 
 # FULL RESET DATABASE
@@ -156,7 +187,3 @@ def ensure_genre_and_get_id(cur, conn, target_genre):
         return {}
 
     return genre_dict
-
-
-
-

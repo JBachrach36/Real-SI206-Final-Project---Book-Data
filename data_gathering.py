@@ -90,12 +90,11 @@ def create_tables(cur, conn):
 
 
 # GET GOOGLE BOOKS JSON
-def get_google_books_json(query, genre=None, max_results=API_CALL_LIMIT, start_index=0):
+def get_google_books_json(genre, max_results=API_CALL_LIMIT, start_index=0):
     """
     Gets JSON data from Google Books API.
     Args:
-        query (str): General search query (e.g., "books").
-        genre (str, optional): Genre to filter by (used as part of the query string).
+        genre (str): Genre to filter by (used as part of the query string).
         max_results (int): Results per API call (max 40 for Google Books).
         start_index (int): The result index to start from (for pagination).
 
@@ -104,12 +103,11 @@ def get_google_books_json(query, genre=None, max_results=API_CALL_LIMIT, start_i
         dict or None: API response JSON or None if failed.
     """
     params = {
-        "q": query,
         "maxResults": max_results,
         "startIndex": start_index,
         "key": google_books_key,
     }
-    # SUbject is genre
+    # Subject is genre
     if genre:
         params["q"] = f"subject:{genre}"
 
@@ -363,13 +361,12 @@ def process_open_library_data(cur, conn, data, target_genre, genre_dict, remaini
 
 
 # GATHER GOOGLE BOOKS DATA
-def gather_google_books_data(cur, conn, query, num_records_goal, target_genre, genre_dict):
+def gather_google_books_data(cur, conn, num_records_goal, target_genre, genre_dict):
     """
     Gathers a target number of unique book records from Google Books API for a specific genre.
     Args:
         cur: Cursor object.
         conn: Connection object.
-        query (str): Base query for the API.
         num_records_goal (int): The target number of new records to insert.
         target_genre (str): The specific genre to gather data for.
         genre_dict (dict): Dictionary mapping the genre name to its ID.
@@ -393,7 +390,7 @@ def gather_google_books_data(cur, conn, query, num_records_goal, target_genre, g
         # Don't ask for more than needed
         page_max = min(max_per_page, remaining)
         print(f"Requesting from index {start_index} for genre '{target_genre}' (API page {page_counter+1}), requesting up to {page_max}")
-        results = get_google_books_json(query, genre=target_genre, max_results=page_max, start_index=start_index)
+        results = get_google_books_json(genre=target_genre, max_results=page_max, start_index=start_index)
         if results and "items" in results:
             if not results["items"]:
                 print(f"No more book records found for genre '{target_genre}' at index {start_index}.")

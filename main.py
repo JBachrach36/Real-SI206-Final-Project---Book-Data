@@ -79,10 +79,8 @@ def main():
         )
     elif api_choice == 2:
         print(f"Attempting to gather {dg.GOOGLE_BOOKS_RECORDS_TO_GATHER} new records for '{target_genre}' from Google Books")
-        # Possibly modify next line
-        google_query = "books"
         dg.gather_google_books_data(
-            cur, conn, google_query,
+            cur, conn,
             dg.GOOGLE_BOOKS_RECORDS_TO_GATHER,
             target_genre,
             genre_dict
