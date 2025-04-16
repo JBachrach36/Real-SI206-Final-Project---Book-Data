@@ -10,15 +10,15 @@ import json
 import data_gathering as dg
 import data_analysis as da
 
+
 # GLOBAL CONSTANTS (kept consistent across the other files)
 DATABASE_NAME = "book_trends.db"
 ALL_COMMON_GENRES = [
-    "Science Fiction", "Fantasy", "Mystery", "Thriller", "Romance",
-    "Historical Fiction", "Contemporary Fiction", "Young Adult",
-    "Biography", "Autobiography", "Memoir", "Cookbook", "Travel",
-    "Poetry", "Drama", "Horror"
+    "Science Fiction", "Fantasy", "Mystery",
+    "Thriller", "Romance", "Horror"
 ]
 VISUALIZATION_OUTPUT_DIR = "visualizations"
+
 
 # PRESENT API CHOICES
 def present_api_choices():
@@ -37,6 +37,8 @@ def present_api_choices():
             print("Invalid input. Please enter a valid number.")
 
 
+
+
 # SET UP DATABASE
 def set_up_database():
     """
@@ -44,6 +46,7 @@ def set_up_database():
     """
     cur, conn = dg.set_up_database(DATABASE_NAME)
     return cur, conn
+
 
 # GET OR ADD GENRE
 def get_or_add_genre(cur, conn, genre_name):
@@ -61,6 +64,9 @@ def get_or_add_genre(cur, conn, genre_name):
 
 
 
+
+
+
 # FULL RESET DATABASE
 def full_reset_database(cur, conn):
     """
@@ -72,6 +78,8 @@ def full_reset_database(cur, conn):
         cur.execute("PRAGMA foreign_keys = OFF;")
 
 
+
+
         # Check if tables exist before attempting to delete
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='Books';")
         if cur.fetchone():
@@ -79,6 +87,8 @@ def full_reset_database(cur, conn):
             cur.execute("DELETE FROM Books;")
             # Reset the auto increment counter for Books
             cur.execute("DELETE FROM sqlite_sequence WHERE name='Books';")
+
+
 
 
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='GenreLookup';")
@@ -89,15 +99,19 @@ def full_reset_database(cur, conn):
             cur.execute("DELETE FROM sqlite_sequence WHERE name='GenreLookup';")
 
 
+
+
         # Turn foreign key checks back on
         cur.execute("PRAGMA foreign_keys = ON;")
         conn.commit()
         print("Tables cleared and ID counters reset.")
 
 
+
+
     # Don't clear if there is nothing to clear. Operation error is a problem with the sql database operation
     # For general sqlite3 errors
-    except sqlite3.Error as e: 
+    except sqlite3.Error as e:
         print(f"An error occurred during database reset: {e}")
         # Attempt to roll back changes if something went wrong mid-way
         conn.rollback()
@@ -107,9 +121,10 @@ def full_reset_database(cur, conn):
         # No error if connection is closed
         except:
              pass
-        
+       
 
-        
+
+       
 def prompt_full_reset_database(cur, conn):
     """ Prompts the user if they want to clear the database before proceeding.
     """
@@ -127,7 +142,11 @@ def prompt_full_reset_database(cur, conn):
         except Exception as e:
             print(f"Error: {e}. Please try again.")
 
-    
+
+   
+
+
+
 
 
 
@@ -139,15 +158,41 @@ def present_genre_choices():
     for i, genre in enumerate(ALL_COMMON_GENRES):
         print(f"{i + 1}. {genre}")
 
+
     while True:
         try:
-            genre_number = int(input("Enter the corresponding number of the genre you want to analyze (e.g., any single number from 1 to 16): "))
+            genre_number = int(input("Enter the corresponding number of the genre you want to analyze (e.g., any single number from 1 to 6): "))
             if 1 <= genre_number <= len(ALL_COMMON_GENRES):
                 return [ALL_COMMON_GENRES[genre_number - 1]]
             else:
                 print(f"Invalid choice. Please enter a number between 1 and {len(ALL_COMMON_GENRES)}.")
         except ValueError:
             print("Invalid input. Please enter a valid number.")
+
+
+
+
+def prompt_analyze_data():
+    """
+    Asks the user if they want to analyze and visualize the data.
+    Returns True if yes, False if no.
+    """
+    while True:
+        try:
+            choice = input("Would you like to analyze and visualize the data? (y/n): ").strip().lower()
+            if choice == 'y':
+                return True
+            elif choice == 'n':
+                return False
+            else:
+                print("Invalid input. Please enter 'y' or 'n'.")
+        except Exception as e:
+            print(f"Error: {e}. Please try again.")
+
+
+
+
+
 
 
 
@@ -167,9 +212,13 @@ def ensure_genre_and_get_id(cur, conn, target_genre):
         conn.commit()
 
 
+
+
         # Retrieve the genre_id (no matter if it was just inserted or already existed)
         cur.execute('SELECT genre_id FROM GenreLookup WHERE genre = ?', (target_genre,))
         result = cur.fetchone()
+
+
 
 
         if result:
@@ -181,9 +230,21 @@ def ensure_genre_and_get_id(cur, conn, target_genre):
             conn.rollback()
 
 
+
+
     except sqlite3.Error as e:
         print(f"Database error while ensuring genre '{target_genre}': {e}")
         conn.rollback()
         return {}
 
+
     return genre_dict
+
+
+
+
+
+
+
+
+

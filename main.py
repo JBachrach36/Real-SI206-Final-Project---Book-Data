@@ -8,15 +8,21 @@ import utility as u
 
 
 
+
+
+
+
 # GLOBAL CONSTANTS (kept consistent across the other files)
 DATABASE_NAME = "book_trends.db"
 ALL_COMMON_GENRES = [
-    "Science Fiction", "Fantasy", "Mystery", "Thriller", "Romance",
-    "Historical Fiction", "Contemporary Fiction", "Young Adult",
-    "Biography", "Autobiography", "Memoir", "Cookbook", "Travel",
-    "Poetry", "Drama", "Horror"
+    "Science Fiction", "Fantasy", "Mystery",
+    "Thriller", "Romance", "Horror"
 ]
 VISUALIZATION_OUTPUT_DIR = "visualizations"
+
+
+
+
 
 
 
@@ -30,6 +36,8 @@ def main():
     """
 
 
+
+
     # Present genre choices to the user (gets a list with one genre)
     target_genres_list = u.present_genre_choices()
     if not target_genres_list:
@@ -38,26 +46,42 @@ def main():
     target_genre = target_genres_list[0]
 
 
+
+
     # Prompt user to select API
     api_choice = u.present_api_choices()
+
+
 
 
     # Set up database connection (used by both gathering and analysis)
     cur, conn = u.set_up_database()
 
 
+
+
     # Prompt user to clear data and reset IDs
     u.prompt_full_reset_database(cur, conn)
+
+
 
 
     # Create tables
     dg.create_tables(cur, conn)
 
 
+
+
     # Ensure genre exists and get its id. Modified to make the ids increment properly
     genre_id = u.get_or_add_genre(cur, conn, target_genre)
     genre_dict = {target_genre: genre_id}
     print(f"Genre '{target_genre}' is in database with ID: {genre_id}.")
+
+
+
+
+
+
 
 
 
@@ -91,14 +115,25 @@ def main():
 
 
 
+
+
+
+
+
+
     # Commit after gathering all data
     print("Committing gathered data")
     conn.commit()
 
 
-    # Analyze and visualize data
-    # TODO Call necessary functions for data analysis
-    #print("Analysing and visualiing data")
+
+
+    # Analyze and visualize data (If user wants)
+    if u.prompt_analyze_data():
+        print("Analyzing and visualizing data...")
+        da.run_analysis_and_visualizations(cur, target_genre, genre_id)
+    else:
+        print("Skipping data analysis and visualization.")
    
     # Close connection
     print("Closing database connection.")
@@ -107,8 +142,14 @@ def main():
 
 
 
+
+
+
+
 if __name__ == "__main__":
     main()
+
+
 
 
 
