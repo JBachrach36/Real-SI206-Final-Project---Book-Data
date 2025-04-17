@@ -245,6 +245,80 @@ def ensure_genre_and_get_id(cur, conn, target_genre):
 
 
 
+# GET AVAILABLE GENRES FROM DATABASE
+def get_available_genres_from_db(cur):
+    """
+    Queries the database to find distinct genres that have associated entries
+    in the Books table.
+
+
+    Args:
+        cur: Database cursor object.
+
+
+    Returns:
+        list: A list of tuples, where each tuple is (genre_name, genre_id),
+              sorted alphabetically by genre name. Returns an empty list if
+              no genres have data or an error occurs.
+    """
+    available_genres = []
+    try:
+        cur.execute("""
+            SELECT genre, genre_id
+            FROM GenreLookup
+            ORDER BY genre
+        """)
+        results = cur.fetchall()
+        if results:
+            available_genres = results
+    except sqlite3.Error as e:
+        print(f"Database error while fetching available genres: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred while fetching available genres: {e}")
+    return available_genres
+
+
+# PROMPT USER TO SELECT GENRE FOR ANALYSIS
+def prompt_select_genre_for_analysis(available_genres):
+    """
+    Presents a list of available genres to the user and prompts them to select one.
+    Args:
+        available_genres (list): A list of (genre_name, genre_id) tuples.
+
+
+    Returns:
+        tuple: The selected (genre_name, genre_id) tuple, or None if no valid
+               selection is made.
+    """
+    if not available_genres:
+        print("No genres found in the database with associated book data.")
+        return None
+
+
+    print("Select a genre to analyze from the database:")
+    for i, (genre_name, genre_id) in enumerate(available_genres):
+        print(f"{i + 1}. {genre_name}")
+
+
+    while True:
+        try:
+            choice = input(f"Enter the number corresponding to the genre (1-{len(available_genres)}): ")
+            choice_index = int(choice) - 1
+            if 0 <= choice_index < len(available_genres):
+                # Return the (genre_name, genre_id) tuple
+                return available_genres[choice_index]
+            else:
+                print("Invalid choice. Please enter a number from the list.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+        except Exception as e:
+             print(f"An error occurred: {e}. Please try again.")
+
+
+
+
+
+
 
 
 

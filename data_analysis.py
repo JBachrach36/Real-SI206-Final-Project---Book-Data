@@ -34,7 +34,6 @@ def calculate_books_per_decade(cur, target_genre_id):
               or None if an error occurs or no data is found.
     """
     try:
-        # SQL query without aliases
         cur.execute("""
             SELECT Books.publish_date
             FROM Books
@@ -43,10 +42,8 @@ def calculate_books_per_decade(cur, target_genre_id):
         """, (target_genre_id,))
 
 
-        # Initialize an empty list to store the valid years
         years = []
         # Fetch all results
-        # (Using cur.fetchall() correctly!)
         all_rows = cur.fetchall()
 
 
@@ -102,7 +99,35 @@ def calculate_top_authors(cur, target_genre_id, top_n=10):
         list: A list of tuples, where each tuple is (author_name, book_count),
               sorted by book_count descending. Returns None if an error occurs.
     """
-    pass
+    try:
+        cur.execute("""
+            SELECT Books.author, COUNT(Books.book_id) as book_count
+            FROM Books
+            JOIN GenreLookup ON Books.genre_id = GenreLookup.genre_id
+            WHERE Books.genre_id = ? AND Books.author IS NOT NULL AND Books.author != ''
+            GROUP BY Books.author
+            ORDER BY book_count DESC
+            LIMIT ?
+        """, (target_genre_id, top_n,))
+
+
+        top_authors = cur.fetchall()
+
+
+        if not top_authors:
+             print(f"No author data found for genre_id {target_genre_id}.")
+             return None
+
+
+        return top_authors
+
+
+    except sqlite3.Error as e:
+        print(f"Database error during author calculation for genre_id {target_genre_id}: {e}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred during author calculation: {e}")
+        return None
 
 
 
@@ -127,8 +152,7 @@ def write_calculations_to_csv(decade_data, author_data, filename, output_dir):
     try:
         with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
-
-
+           
             # Write Decade Data
             writer.writerow(['*** Books Per Decade ***'])
             writer.writerow(['Decade Start Year', 'Book Count'])
@@ -138,21 +162,18 @@ def write_calculations_to_csv(decade_data, author_data, filename, output_dir):
                     writer.writerow([decade, count])
             else:
                 writer.writerow(['No data available', ''])
-
-
+           
             # Add a separator row
             writer.writerow([])
-
-
+           
             # Write Author Data
-            # Note: author_data will be None if calculate_top_authors is stubbed
             writer.writerow([f'*** Top {len(author_data) if author_data else 0} Authors ***'])
             writer.writerow(['Author', 'Book Count'])
             if author_data:
                 for author, count in author_data:
                     writer.writerow([author, count])
             else:
-                 writer.writerow(['No data available', '']) # This will now be printed
+                 writer.writerow(['No data available', ''])
 
 
         print(f"Calculation results written successfully to {filepath}")
@@ -187,8 +208,7 @@ def plot_books_per_decade(decade_data, target_genre, filename, output_dir):
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     filepath = os.path.join(output_dir, filename)
-
-
+   
     # Prepare data for plotting
     decades = sorted(decade_data.keys())
     counts = [decade_data[d] for d in decades]
@@ -198,8 +218,7 @@ def plot_books_per_decade(decade_data, target_genre, filename, output_dir):
 
     plt.figure(figsize=(10, 6))
     plt.bar(decade_labels, counts, color='skyblue')
-
-
+   
     plt.xlabel("Decade")
     plt.ylabel("Number of Books Published")
     plt.title(f"Books Published per Decade in '{target_genre}' Genre")
@@ -207,17 +226,16 @@ def plot_books_per_decade(decade_data, target_genre, filename, output_dir):
     plt.xticks(rotation=45, ha='right')
      # Adjust layout to prevent labels overlapping
     plt.tight_layout()
-
-
+   
     try:
         plt.savefig(filepath)
         print(f"Decade distribution bar chart saved to {filepath}")
-        plt.close() # Close the plot figure to free memory
+        plt.close()
     except Exception as e:
         print(f"Error saving decade plot to {filepath}: {e}")
 
 
-# PLOT TOP AUTHORS PIE
+# PLOT TOP AUTHORS
 def plot_top_authors_pie(author_data, target_genre, filename, output_dir, max_slices=5):
     """
     Creates and saves a standard pie chart showing the distribution of books
@@ -232,7 +250,6 @@ def plot_top_authors_pie(author_data, target_genre, filename, output_dir, max_sl
         output_dir (str): The directory to save the plot image in.
         max_slices (int): Maximum number of individual author slices before grouping.
     """
-    # Note: This function will receive author_data=None if calculate_top_authors is stubbed
     if not author_data:
         print("No author data available to plot.")
         return
@@ -294,7 +311,7 @@ def plot_top_authors_pie(author_data, target_genre, filename, output_dir, max_sl
         print(f"Error saving authors pie chart to {filepath}: {e}")
 
 
-# PLOT TOP AUTHORS BAR
+# PLOT TOP AUTHORS
 def plot_top_authors_bar(author_data, target_genre, filename, output_dir):
     """
     Creates and saves a vertical bar chart for the top authors and their book counts.
@@ -306,7 +323,38 @@ def plot_top_authors_bar(author_data, target_genre, filename, output_dir):
         filename (str): The name for the output image file.
         output_dir (str): The directory to save the plot image in.
     """
-    pass
+    if not author_data:
+        print("No author data available to plot.")
+        return
+
+
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    filepath = os.path.join(output_dir, filename)
+
+
+    authors = [item[0] for item in author_data]
+    counts = [item[1] for item in author_data]
+
+
+    plt.figure(figsize=(12, 7))
+    bars = plt.bar(authors, counts, color='lightcoral')
+
+
+    plt.xlabel("Author")
+    plt.ylabel("Number of Books")
+    plt.title(f"Top {len(authors)} Authors by Book Count in '{target_genre}' Genre")
+    plt.xticks(rotation=60, ha='right', fontsize=9)
+    plt.bar_label(bars, padding=3, fontsize=8)
+    plt.tight_layout()
+
+
+    try:
+        plt.savefig(filepath)
+        print(f"Top authors bar chart saved to {filepath}")
+        plt.close()
+    except Exception as e:
+        print(f"Error saving authors bar chart to {filepath}: {e}")
 
 
 
@@ -327,7 +375,7 @@ def run_analysis_and_visualizations(cur, target_genre, target_genre_id):
         target_genre (str): The name of the genre being analyzed (for labels/filenames).
         target_genre_id (int): The ID of the genre to filter data by.
     """
-    print(f"Starting Analysis for Genre: {target_genre} (ID: {target_genre_id})")
+    print(f"\n*** Starting Analysis for Genre: {target_genre} (ID: {target_genre_id}) ***")
 
 
     # 1. Calculate Books per Decade
@@ -345,7 +393,6 @@ def run_analysis_and_visualizations(cur, target_genre, target_genre_id):
     if top_authors:
          print(f"Found top {len(top_authors)} authors.")
     else:
-         # This message will now always be printed
          print("No author data found or error occurred.")
 
 
@@ -353,7 +400,6 @@ def run_analysis_and_visualizations(cur, target_genre, target_genre_id):
     safe_genre_name = target_genre.replace(' ', '_').lower()
     csv_filename = CALCULATION_FILENAME_TEMPLATE.format(genre=safe_genre_name)
     print(f"Writing calculations to {csv_filename}...")
-    # write_calculations_to_csv
     write_calculations_to_csv(decade_counts, top_authors, csv_filename, CALCULATIONS_OUTPUT_DIR)
 
 
@@ -368,14 +414,18 @@ def run_analysis_and_visualizations(cur, target_genre, target_genre_id):
 
     # Plot 2: Top Authors (Pie Chart)
     author_pie_filename = PLOT_FILENAME_TEMPLATE.format(genre=safe_genre_name, plot_type="top_authors_pie")
-    # plot_top_authors_pie will print "No author data available to plot."
     plot_top_authors_pie(top_authors, target_genre, author_pie_filename, VISUALIZATION_OUTPUT_DIR)
 
 
     # Plot 3: Top Authors (Bar Chart)
-    # placeholder
-   
+    author_bar_filename = PLOT_FILENAME_TEMPLATE.format(genre=safe_genre_name, plot_type="top_authors_bar")
+    plot_top_authors_bar(top_authors, target_genre, author_bar_filename, VISUALIZATION_OUTPUT_DIR)
 
 
-    print(f"Analysis Complete for Genre: {target_genre}")
+    print(f"*** Analysis Complete for Genre: {target_genre} ***")
+
+
+
+
+
 

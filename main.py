@@ -130,10 +130,33 @@ def main():
 
     # Analyze and visualize data (If user wants)
     if u.prompt_analyze_data():
-        print("Analyzing and visualizing data...")
-        da.run_analysis_and_visualizations(cur, target_genre, genre_id)
+        print("Preparing for Analysis")
+       
+        # Get list of genres currently present in the Books table
+        available_genres_in_db = u.get_available_genres_from_db(cur)
+       
+        if not available_genres_in_db:
+            print("No data found in the database to analyze.")
+        else:
+            # Prompt user to select which available genre they want to analyze
+            selected_genre_info = u.prompt_select_genre_for_analysis(available_genres_in_db)
+           
+            if selected_genre_info:
+                # Unpack tuple
+                analysis_target_genre, analysis_target_genre_id = selected_genre_info
+               
+                print(f"Starting analysis for selected genre: '{analysis_target_genre}'")
+                # Run the analysis with the genre the user chose
+                da.run_analysis_and_visualizations(cur, analysis_target_genre, analysis_target_genre_id)
+            else:
+                print("No genre selected for analysis.")
+               
     else:
         print("Skipping data analysis and visualization.")
+   
+    # Close connection
+    print("Closing database connection.")
+    conn.close()
    
     # Close connection
     print("Closing database connection.")
@@ -148,6 +171,17 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
